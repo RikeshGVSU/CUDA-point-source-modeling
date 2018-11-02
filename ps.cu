@@ -6,38 +6,19 @@
 
 #define BLOCK_SIZE 256
  
-__global__ void getDensity (double *a_d, double *b_d, double *c_d, int numSlice, int time, double densityAt, int pointSource, double density_d)
+__global__ void getDensity (double *a_d, double *b_d, int numSlice)
 {
    	//double * temp;
-  int x = blockIdx.x * blockDim.x + threadIdx.x;	
-  for (int n = 0; n < 1000; n++){
+      int x = blockIdx.x * blockDim.x + threadIdx.x;	
       if (x != 0 && x < numSlice - 1) {
         b_d[x] = (a_d[x - 1] + a_d[x + 1])/2;
       }
       __syncthreads();
       if (x == numSlice - 1){
-      	b_d[x] = b_d[x - 1];
+      	b_d[numSlice - 1] = b_d[numSlice - 2];
       }
-      n++;
-      __syncthreads();
-      if (x != 0 && x < numSlice - 1) {
-        a_d[x] = (b_d[x - 1] + b_d[x + 1])/2;
-      }
-      __syncthreads();
-      if (x == numSlice - 1){
-      	a_d[x] = a_d[x - 1];
-      }
-    }
 
     // Copying result with the neighboring values, just to check the neighbor value
-
-    int index = (int)((numSlice - 1) * 0.7);
-    c_d[0] =  a_d[index - 2];
-    c_d[1] =  a_d[index - 1];
-    c_d[2] =  a_d[index];
-    c_d[3] =  a_d[index+2];
-    c_d[4] =  a_d[index+1];
-
 
 }
 
@@ -55,20 +36,29 @@ __global__ void initialize (double *a_d, double *b_d,  int numSlice, int pointSo
 	}
 }
 
-extern "C" void compute(double *c, int numSlice, int time, double densityAt, int pointSource)
+extern "C" double compute(int numSlice, int time, double densityAt, int pointSource)
 {
-	double *a_d, *b_d, *c_d;
+	double *a_d, *b_d, *temp;
 
 	cudaMalloc ((void**) &a_d, sizeof(double) * numSlice);
 	cudaMalloc ((void**) &b_d, sizeof(double) * numSlice);
-	cudaMalloc ((void**) &c_d, sizeof(double) * 5);
-	double density_d = 0;
+	//cudaMalloc ((void**) &c_d, sizeof(double) * 5);
+	double density = 0;
 	
 	initialize <<< ceil((float) numSlice/BLOCK_SIZE), BLOCK_SIZE>>> (a_d, b_d, numSlice, pointSource);
 
-	getDensity <<< ceil((float) numSlice/BLOCK_SIZE), BLOCK_SIZE>>> (a_d, b_d, c_d, numSlice, time, densityAt, pointSource, density_d);
+  for (int n = 0; n < time; n++){
+    getDensity <<< ceil((float) numSlice/BLOCK_SIZE), BLOCK_SIZE>>> (a_d, b_d, numSlice);
+    temp = a_d;
+    a_d = b_d;
+    b_d = temp;
+  }
 
-	cudaMemcpy (c, c_d, sizeof(double) * 5, cudaMemcpyDeviceToHost);
+  int index = (int)((numSlice - 1) * 0.7);
+
+
+  cudaMemcpy(&density, &a_d[index], sizeof(double), cudaMemcpyDeviceToHost);
+
 
 	cudaError_t err = cudaGetLastError();
 	if (err != cudaSuccess)
@@ -76,6 +66,7 @@ extern "C" void compute(double *c, int numSlice, int time, double densityAt, int
 		
 	cudaFree (a_d);
 	cudaFree (b_d);
-	cudaFree (c_d);
+
+  return density;
 }
 

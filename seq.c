@@ -53,12 +53,12 @@ double compute(double *A, double *B, int numSlice, int time, double densityAt) {
     }
     index = (int)((numSlice - 1) * densityAt);
     printf ("Index: %d\n" , index);
-    return A[index - 1];
+    return B[index];
 }
 
 int main (int argc, char *argv[])
 {
-  int numSlice = atof(argv[1]);
+  int numSlice = atof(argv[1]) + 1;
   int time = atof(argv[2]);
   double densityAt = 0.7;
   int pointSource = atof(argv[3]);

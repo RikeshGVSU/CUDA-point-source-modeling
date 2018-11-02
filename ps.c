@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-extern void compute(double *c, int numSlice, int time, double densityAt, int pointSource);
+extern double compute(int numSlice, int time, double densityAt, int pointSource, double density);
 
 int main (int argc, char *argv[])
 {
@@ -11,12 +11,12 @@ int main (int argc, char *argv[])
   int time = atof(argv[2]);
   double densityAt = 0.7;
   int pointSource = atof(argv[3]);
-  double *c = (double *) malloc(5 * sizeof(double));
+  double density;
     
   struct timeval  tv1, tv2;
   gettimeofday(&tv1, NULL);
 
-   compute (c, numSlice, time, densityAt, pointSource);
+  density = compute (numSlice, time, densityAt, pointSource, density);
     
   gettimeofday(&tv2, NULL);
 
@@ -26,11 +26,7 @@ int main (int argc, char *argv[])
 
 
     // Again, print the arrays
-    printf ("Density1: %f\n" , c[0]);
-    printf ("Density2: %f\n" , c[1]);
-    printf ("Density3: %f\n" , c[2]);
-    printf ("Density4: %f\n" , c[3]);
-    printf ("Density5: %f\n" , c[4]);
+    printf ("Density :  %f\n" , density);
 
     
     return 0;
