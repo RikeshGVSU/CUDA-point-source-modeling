@@ -8,10 +8,24 @@
  
 __global__ void getDensity (double *a_d, double *b_d, int numSlice)
 {
-   	//double * temp;
-      int x = blockIdx.x * blockDim.x + threadIdx.x;	
+     // __shared__ double s[BLOCK_SIZE + 2];
+      int x = blockIdx.x * blockDim.x + threadIdx.x;
+
+      
+
       if (x != 0 && x < numSlice - 1) {
-        b_d[x] = (a_d[x - 1] + a_d[x + 1])/2;
+        // if(threadIdx.x == 0) {
+        // s[0] = a_d[x-1];
+        // s[1] = a_d[x];
+        // }
+        // else if (threadIdx.x == BLOCK_SIZE - 1){
+        //   s[BLOCK_SIZE +1] = a_d[x + 1];
+        //   s[BLOCK_SIZE] = a_d[x];
+        // }
+        // else {
+        //   s[threadIdx.x + 1] = a_d[x];
+        // }
+        b_d[x] = (a_d[x-1] + a_d[x+1])/2;
       }
       __syncthreads();
       if (x == numSlice - 1){
@@ -36,9 +50,10 @@ __global__ void initialize (double *a_d, double *b_d,  int numSlice, int pointSo
 	}
 }
 
+
 extern "C" double compute(int numSlice, int time, double densityAt, int pointSource)
 {
-	double *a_d, *b_d, *temp;
+	double *a_d, *b_d;
 
 	cudaMalloc ((void**) &a_d, sizeof(double) * numSlice);
 	cudaMalloc ((void**) &b_d, sizeof(double) * numSlice);
@@ -49,9 +64,7 @@ extern "C" double compute(int numSlice, int time, double densityAt, int pointSou
 
   for (int n = 0; n < time; n++){
     getDensity <<< ceil((float) numSlice/BLOCK_SIZE), BLOCK_SIZE>>> (a_d, b_d, numSlice);
-    temp = a_d;
     a_d = b_d;
-    b_d = temp;
   }
 
   int index = (int)((numSlice - 1) * 0.7);

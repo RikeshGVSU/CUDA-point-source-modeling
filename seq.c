@@ -53,7 +53,7 @@ double compute(double *A, double *B, int numSlice, int time, double densityAt) {
     }
     index = (int)((numSlice - 1) * densityAt);
     printf ("Index: %d\n" , index);
-    return B[index];
+    return A[index];
 }
 
 int main (int argc, char *argv[])
@@ -85,9 +85,8 @@ int main (int argc, char *argv[])
          (double) (tv2.tv_usec - tv1.tv_usec) / 1000000 +
          (double) (tv2.tv_sec - tv1.tv_sec));
 
-
     // Again, print the arrays
-    printf ("Density: %f" , density);
+    printf ("Density: %f\n" , density);
 
 
     
